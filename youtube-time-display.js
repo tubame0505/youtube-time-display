@@ -43,6 +43,10 @@
           z-index: 9999;
           display: none; /* 初期状態は非表示 */
         }
+
+        .yt-shopping-badge-hidden {
+          display: none !important;
+        }
     `);
 
     // --- 2. ヘルパー関数 (時間フォーマット) ---
@@ -78,6 +82,7 @@
 
     let currentVideoElement = null; // 現在監視中の<video>要素
     let isDisplayEnabled = true; // 表示トグルの状態 (初期値)
+    let isShoppingBadgeBlockEnabled = true; // 商品表示ブロックの状態 (初期値)
 
     /**
      * UIの表示を更新するメイン関数
@@ -102,10 +107,29 @@
         }
     }
 
+    /**
+     * YouTubeプレイヤー上の「商品を表示」バッジを非表示にする
+     */
+    function updateShoppingBadgeBlock() {
+        const shoppingBadgeSelector = [
+            'button.ytp-suggested-action-badge[aria-label="商品を表示"]',
+            'button.ytp-suggested-action-badge[aria-label="View products"]',
+            'button.ytp-suggested-action-badge[aria-label="Show products"]'
+        ].join(',');
+
+        const shoppingBadges = document.querySelectorAll(shoppingBadgeSelector);
+
+        shoppingBadges.forEach((badge) => {
+            badge.classList.toggle('yt-shopping-badge-hidden', isShoppingBadgeBlockEnabled);
+        });
+    }
+
     // 監視ループ (SPA対応)
     // 100msごとにYouTubeのメイン動画プレイヤーを探す
     // (onurlchangeの代わりにポーリングする方式)
     setInterval(() => {
+        updateShoppingBadgeBlock();
+
         // 現在のURLが動画再生ページ以外であれば、処理をしない (パフォーマンス改善のため)
         // ただし、@match を広げているため、動画要素が見つからない間は表示しないという既存ロジックで十分
         // if (!window.location.href.includes('/watch?v=')) {
@@ -185,9 +209,24 @@
         // 3. Tampermonkeyのメニューにコマンドを登録
         GM_registerMenuCommand('時間表示 (ON/OFF) を切り替え', toggleDisplaySetting);
 
-        // 4. 読み込んだ状態でUIを一度更新
+        // 4. 商品表示ブロックの状態を読み込む (デフォルトは true)
+        isShoppingBadgeBlockEnabled = await GM_getValue('isShoppingBadgeBlockEnabled', true);
+
+        // 5. 商品表示ブロックのトグルを実行する関数
+        async function toggleShoppingBadgeBlockSetting() {
+            isShoppingBadgeBlockEnabled = !isShoppingBadgeBlockEnabled;
+            await GM_setValue('isShoppingBadgeBlockEnabled', isShoppingBadgeBlockEnabled);
+            updateShoppingBadgeBlock();
+            console.log(`[TimeDisplayScript] Shopping badge block set to: ${isShoppingBadgeBlockEnabled}`);
+        }
+
+        // 6. Tampermonkeyのメニューにコマンドを登録
+        GM_registerMenuCommand('商品表示ブロック (ON/OFF) を切り替え', toggleShoppingBadgeBlockSetting);
+
+        // 7. 読み込んだ状態でUIを一度更新
         // (トグルOFFの場合に最初から非表示にするため)
         updateDisplay();
+        updateShoppingBadgeBlock();
     }
 
     // スクリプトの初期化を実行

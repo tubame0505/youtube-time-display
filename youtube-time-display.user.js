@@ -47,6 +47,9 @@
         .yt-shopping-badge-hidden {
           display: none !important;
         }
+        .yt-shorts-hidden {
+          display: none !important;
+        }
     `);
 
     // --- 2. ヘルパー関数 (時間フォーマット) ---
@@ -83,6 +86,7 @@
     let currentVideoElement = null; // 現在監視中の<video>要素
     let isDisplayEnabled = true; // 表示トグルの状態 (初期値)
     let isShoppingBadgeBlockEnabled = true; // 商品表示ブロックの状態 (初期値)
+    let isShortsHideEnabled = true; // ショート非表示の状態 (初期値)
 
     /**
      * UIの表示を更新するメイン関数
@@ -121,6 +125,51 @@
 
         shoppingBadges.forEach((badge) => {
             badge.classList.toggle('yt-shopping-badge-hidden', isShoppingBadgeBlockEnabled);
+        });
+    }
+    /**
+     * YouTube全体のショート動画を非表示にする
+     * 新旧両マークアップ (ytm-shorts-lockup-view-model / a[href^="/shorts/"]) に対応
+     */
+    function hideShorts() {
+        const shortsSelector = 'ytm-shorts-lockup-view-model, a[href^="/shorts/"]';
+        const itemSelector = [
+            'ytd-rich-item-renderer',
+            'ytd-video-renderer',
+            'ytd-grid-video-renderer',
+            'ytd-compact-video-renderer',
+            'yt-lockup-view-model'
+        ].join(',');
+        const containerSelector = 'ytd-rich-shelf-renderer, ytd-item-section-renderer';
+        const HIDE_CLASS = 'yt-shorts-hidden';
+
+        if (!isShortsHideEnabled) {
+            // 無効時: 付与済みクラスを全除去して復元
+            document.querySelectorAll(`.${HIDE_CLASS}`).forEach((el) => {
+                el.classList.remove(HIDE_CLASS);
+            });
+            return;
+        }
+
+        // 1. 個別ショートアイテムを非表示
+        document.querySelectorAll(shortsSelector).forEach((shortsEl) => {
+            const item = shortsEl.closest(itemSelector);
+            if (item) {
+                item.classList.add(HIDE_CLASS);
+            }
+        });
+
+        // 2. ショートのみで構成される棚・セクションをヘッダーごと非表示
+        document.querySelectorAll(containerSelector).forEach((container) => {
+            const items = container.querySelectorAll(itemSelector);
+            // アイテムが0件の場合はスキップ (読み込み途中の誤非表示防止)
+            if (items.length === 0) {
+                return;
+            }
+            const allShorts = [...items].every((item) => item.querySelector(shortsSelector));
+            if (allShorts) {
+                container.classList.add(HIDE_CLASS);
+            }
         });
     }
 

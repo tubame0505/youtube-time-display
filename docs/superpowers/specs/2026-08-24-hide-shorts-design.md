@@ -70,10 +70,11 @@ const itemSelector =
 `initialize()` 内に追加:
 
 - `GM_getValue('isShortsHideEnabled', true)` で読み込み
-- `GM_registerMenuCommand('ショート非表示 (ON/OFF) を切り替え', ...)` で登録
-- トグル実行時は反転 → `GM_setValue` 保存 → `hideShorts()` 即時実行
-
-既存の「時間表示」「商品表示ブロック」トグルと同一パターン。
+- ヘルパー `registerMenuCommand(id, label, state, callback)` で登録
+  - ラベルは現在の状態を表示: `ショート非表示 (現在: ON)` / `… (現在: OFF)`
+  - 同じ `id` を渡して再登録することで、Tampermonkey v5+ は既存メニュー項目のラベルをその場で更新
+- トグル実行時は反転 → `GM_setValue` 保存 → `hideShorts()` 即時実行 → 新状態のラベルで再登録
+- 時間表示・商品表示ブロックの既存 2 トグルにも同じ状態表示を適用 (id: `yt-time-display-toggle` / `yt-shopping-badge-toggle` / `yt-shorts-hide-toggle`)
 
 ## データフロー
 

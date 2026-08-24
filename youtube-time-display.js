@@ -245,49 +245,58 @@
         // 1. 保存されたトグル状態を読み込む (デフォルトは true)
         isDisplayEnabled = await GM_getValue('isDisplayEnabled', true);
 
-        // 2. トグルを実行する関数
-        async function toggleDisplaySetting() {
-            // 状態を反転
-            isDisplayEnabled = !isDisplayEnabled;
-            // 状態を保存
-            await GM_setValue('isDisplayEnabled', isDisplayEnabled);
-            // UIを即時更新
-            updateDisplay();
-            console.log(`[TimeDisplayScript] Display set to: ${isDisplayEnabled}`);
+        // 2. メニューコマンド登録ヘルパー
+        // ラベルに現在の状態 (ON/OFF) を表示し、同じ id を渡すことで既存項目をその場で更新する
+        function registerMenuCommand(id, label, state, callback) {
+            GM_registerMenuCommand(`${label} (現在: ${state ? 'ON' : 'OFF'})`, callback, { id });
         }
 
-        // 3. Tampermonkeyのメニューにコマンドを登録
-        GM_registerMenuCommand('時間表示 (ON/OFF) を切り替え', toggleDisplaySetting);
+        // 3. 時間表示トグルの状態を反転する関数
+        async function toggleDisplaySetting() {
+            isDisplayEnabled = !isDisplayEnabled;
+            await GM_setValue('isDisplayEnabled', isDisplayEnabled);
+            updateDisplay();
+            console.log(`[TimeDisplayScript] Display set to: ${isDisplayEnabled}`);
+            // メニューラベルを現在の状態で更新
+            registerMenuCommand('yt-time-display-toggle', '時間表示', isDisplayEnabled, toggleDisplaySetting);
+        }
 
-        // 4. 商品表示ブロックの状態を読み込む (デフォルトは true)
+        // 4. 時間表示トグルのメニューコマンドを登録
+        registerMenuCommand('yt-time-display-toggle', '時間表示', isDisplayEnabled, toggleDisplaySetting);
+
+        // 5. 商品表示ブロックの状態を読み込む (デフォルトは true)
         isShoppingBadgeBlockEnabled = await GM_getValue('isShoppingBadgeBlockEnabled', true);
 
-        // 5. 商品表示ブロックのトグルを実行する関数
+        // 6. 商品表示ブロックトグルの状態を反転する関数
         async function toggleShoppingBadgeBlockSetting() {
             isShoppingBadgeBlockEnabled = !isShoppingBadgeBlockEnabled;
             await GM_setValue('isShoppingBadgeBlockEnabled', isShoppingBadgeBlockEnabled);
             updateShoppingBadgeBlock();
             console.log(`[TimeDisplayScript] Shopping badge block set to: ${isShoppingBadgeBlockEnabled}`);
+            // メニューラベルを現在の状態で更新
+            registerMenuCommand('yt-shopping-badge-toggle', '商品表示ブロック', isShoppingBadgeBlockEnabled, toggleShoppingBadgeBlockSetting);
         }
 
-        // 6. Tampermonkeyのメニューにコマンドを登録
-        GM_registerMenuCommand('商品表示ブロック (ON/OFF) を切り替え', toggleShoppingBadgeBlockSetting);
+        // 7. 商品表示ブロックトグルのメニューコマンドを登録
+        registerMenuCommand('yt-shopping-badge-toggle', '商品表示ブロック', isShoppingBadgeBlockEnabled, toggleShoppingBadgeBlockSetting);
 
-        // 7. ショート非表示の状態を読み込む (デフォルトは true)
+        // 8. ショート非表示の状態を読み込む (デフォルトは true)
         isShortsHideEnabled = await GM_getValue('isShortsHideEnabled', true);
 
-        // 8. ショート非表示のトグルを実行する関数
+        // 9. ショート非表示トグルの状態を反転する関数
         async function toggleShortsHideSetting() {
             isShortsHideEnabled = !isShortsHideEnabled;
             await GM_setValue('isShortsHideEnabled', isShortsHideEnabled);
             hideShorts();
             console.log(`[TimeDisplayScript] Shorts hide set to: ${isShortsHideEnabled}`);
+            // メニューラベルを現在の状態で更新
+            registerMenuCommand('yt-shorts-hide-toggle', 'ショート非表示', isShortsHideEnabled, toggleShortsHideSetting);
         }
 
-        // 9. Tampermonkeyのメニューにコマンドを登録
-        GM_registerMenuCommand('ショート非表示 (ON/OFF) を切り替え', toggleShortsHideSetting);
+        // 10. ショート非表示トグルのメニューコマンドを登録
+        registerMenuCommand('yt-shorts-hide-toggle', 'ショート非表示', isShortsHideEnabled, toggleShortsHideSetting);
 
-        // 10. 読み込んだ状態でUIを一度更新
+        // 11. 読み込んだ状態でUIを一度更新
         // (トグルOFFの場合に最初から非表示にするため)
         updateDisplay();
         updateShoppingBadgeBlock();

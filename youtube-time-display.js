@@ -177,6 +177,7 @@
     // 100msごとにYouTubeのメイン動画プレイヤーを探す
     // (onurlchangeの代わりにポーリングする方式)
     setInterval(() => {
+        hideShorts();
         updateShoppingBadgeBlock();
 
         // 現在のURLが動画再生ページ以外であれば、処理をしない (パフォーマンス改善のため)
@@ -272,10 +273,25 @@
         // 6. Tampermonkeyのメニューにコマンドを登録
         GM_registerMenuCommand('商品表示ブロック (ON/OFF) を切り替え', toggleShoppingBadgeBlockSetting);
 
-        // 7. 読み込んだ状態でUIを一度更新
+        // 7. ショート非表示の状態を読み込む (デフォルトは true)
+        isShortsHideEnabled = await GM_getValue('isShortsHideEnabled', true);
+
+        // 8. ショート非表示のトグルを実行する関数
+        async function toggleShortsHideSetting() {
+            isShortsHideEnabled = !isShortsHideEnabled;
+            await GM_setValue('isShortsHideEnabled', isShortsHideEnabled);
+            hideShorts();
+            console.log(`[TimeDisplayScript] Shorts hide set to: ${isShortsHideEnabled}`);
+        }
+
+        // 9. Tampermonkeyのメニューにコマンドを登録
+        GM_registerMenuCommand('ショート非表示 (ON/OFF) を切り替え', toggleShortsHideSetting);
+
+        // 10. 読み込んだ状態でUIを一度更新
         // (トグルOFFの場合に最初から非表示にするため)
         updateDisplay();
         updateShoppingBadgeBlock();
+        hideShorts();
     }
 
     // スクリプトの初期化を実行
